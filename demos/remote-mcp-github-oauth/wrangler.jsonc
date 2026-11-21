@@ -22,11 +22,10 @@
 	 * npx wrangler secret put GITHUB_CLIENT_SECRET
 	 * npx wrangler secret put COOKIE_ENCRYPTION_KEY
 	 */
-  "kv_namespaces": [
-    {
-      "binding": "OAUTH_KV",
-      "id": "tyrellsplace-oauth"
-    }
+  "kv_namespaces": [{
+                    "binding": "KV_BINDING",
+                    "id": "c5370dd266ea4414999c7830bf6e00ee"
+                 }
   ],
   "ai": {
     "binding": "AI"
