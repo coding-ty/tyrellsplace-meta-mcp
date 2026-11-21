@@ -23,7 +23,7 @@
 	 * npx wrangler secret put COOKIE_ENCRYPTION_KEY
 	 */
   "kv_namespaces": [{
-                    "binding": "KV_BINDING",
+                    "binding": "OAUTH_KV",
                     "id": "c5370dd266ea4414999c7830bf6e00ee"
                  }
   ],
