@@ -170,10 +170,11 @@ app.get("/callback", async (c) => {
 
 	// Fetch the user info from GitHub
 	const user = await new Octokit({ auth: accessToken }).rest.users.getAuthenticated();
-	const { login, name, email } = 
-  if (login.toLowerCase() !== "coding-ty") {
-  return c.text("This MCP server is private.", 403);
-}
+	const { login, name, email } = user.data;
+
+   if (login.toLowerCase() !== "coding-ty") {
+   return c.text("This MCP server is private.", 403);
+  }
 		
 	// Return back to the MCP client a new token
 	const { redirectTo } = await c.env.OAUTH_PROVIDER.completeAuthorization({
