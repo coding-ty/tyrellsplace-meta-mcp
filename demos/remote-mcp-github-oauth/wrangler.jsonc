@@ -14,7 +14,7 @@
   // ...
   "vars": {
     "MCP_RESOURCE": "https://tyrellsplace-meta-mcp.tmccalmon94.workers.dev/mcp",
-    "META_GRAPH_VERSION": "v26",
+    "META_GRAPH_VERSION": "v26.0",
     "META_PAGE_ID": "104591341625071"
   },
   // ...
