@@ -155,6 +155,92 @@ function createServer() {
     },
   );
 }
+	  if (props?.login.toLowerCase() === "coding-ty") {
+    const postInput = z.object({
+      message: z.string().min(1).refine((text) => text.trim().length > 0),
+    });
+
+    server.registerTool(
+      "preview_facebook_post",
+      {
+        description:
+          "Preview the exact text for a Facebook Page post. Show it to the user and wait for explicit approval before calling publish_facebook_post.",
+        inputSchema: postInput,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async ({ message }) => ({
+        content: [{ type: "text", text: message }],
+      }),
+    );
+
+    server.registerTool(
+      "publish_facebook_post",
+      {
+        description:
+          "Publish a public text post to the configured Facebook Page. Call only after showing the exact text and receiving explicit user approval to publish it.",
+        inputSchema: postInput,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: true,
+        },
+      },
+      async ({ message }) => {
+        const { META_ACCESS_TOKEN, META_PAGE_ID, META_GRAPH_VERSION } =
+          env as Env & {
+            META_ACCESS_TOKEN?: string;
+            META_PAGE_ID?: string;
+            META_GRAPH_VERSION?: string;
+          };
+
+        const fail = (text: string) => ({
+          isError: true,
+          content: [{ type: "text" as const, text }],
+        });
+
+        if (
+          !META_ACCESS_TOKEN ||
+          !META_PAGE_ID ||
+          !/^\d+$/.test(META_PAGE_ID) ||
+          !META_GRAPH_VERSION ||
+          !/^v\d+\.\d+$/.test(META_GRAPH_VERSION)
+        ) {
+          return fail("Check the Meta settings in Cloudflare.");
+        }
+
+        const url = `https://graph.facebook.com/${META_GRAPH_VERSION}/${META_PAGE_ID}/feed`;
+
+        try {
+          const response = await fetch(url, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${META_ACCESS_TOKEN}` },
+            body: new URLSearchParams({ message }),
+            redirect: "manual",
+          });
+
+          if (response.status >= 500) {
+            return fail("Facebook did not confirm publishing. Check the Page before retrying.");
+          }
+
+          if (!response.ok) {
+            return fail(`Facebook declined publishing (HTTP ${response.status}).`);
+          }
+
+          const result = await response.json<{ id?: string }>();
+          if (!result.id) {
+            return fail("Facebook did not return a post ID. Check the Page before retrying.");
+          }
+
+          return {
+            content: [{ type: "text", text: `Published Facebook post ${result.id}.` }],
+          };
+        } catch {
+          return fail("Publishing could not be confirmed. Check the Page before retrying.");
+        }
+      },
+    );
+  }
 	return server;
 }
 
