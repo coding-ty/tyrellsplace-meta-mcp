@@ -91,6 +91,70 @@ function createServer() {
 		);
 	}
 
+	if (props?.login.toLowerCase() === "coding-ty") {
+  server.registerTool(
+    "get_meta_accounts",
+    {
+      description: "Look up my Facebook Page and its linked Instagram account.",
+      inputSchema: z.object({}),
+      annotations: { readOnlyHint: true },
+    },
+    async () => {
+      const settings = env as Env & {
+        META_ACCESS_TOKEN?: string;
+        META_PAGE_ID?: string;
+        META_GRAPH_VERSION?: string;
+      };
+      const {
+        META_ACCESS_TOKEN: token,
+        META_PAGE_ID: pageId,
+        META_GRAPH_VERSION: version,
+      } = settings;
+
+      if (!token || !pageId || !version ||
+          !/^\d+$/.test(pageId) || !/^v\d+\.\d+$/.test(version)) {
+        return {
+          isError: true,
+          content: [{ type: "text", text: "Check the three Meta settings in Cloudflare." }],
+        };
+      }
+
+      const url = new URL(`https://graph.facebook.com/${version}/${pageId}`);
+      url.searchParams.set("fields", "id,name,instagram_business_account");
+
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+        redirect: "error",
+      });
+
+      if (!response.ok) {
+        return {
+          isError: true,
+          content: [{
+            type: "text",
+            text: `Meta returned HTTP ${response.status}. Check the token and Page permissions.`,
+          }],
+        };
+      }
+
+      const page = await response.json<{
+        id: string;
+        name: string;
+        instagram_business_account?: { id: string };
+      }>();
+
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            facebookPage: { id: page.id, name: page.name },
+            linkedInstagramAccountId: page.instagram_business_account?.id ?? null,
+          }),
+        }],
+      };
+    },
+  );
+}
 	return server;
 }
 
