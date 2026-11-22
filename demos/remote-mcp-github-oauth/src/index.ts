@@ -124,7 +124,7 @@ function createServer() {
 
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
-        redirect: "error",
+        redirect: "manual",
       });
 
       if (!response.ok) {
